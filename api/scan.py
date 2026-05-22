@@ -5,11 +5,7 @@ Called by the frontend dashboard via fetch('/api/scan?top=30&sector=ALL')
 """
 
 import json
-import os
-import time
-from http.server import BaseHTTPRequestHandler
-from urllib.parse import urlparse, parse_qs
-
+from urllib.parse import parse_qs, urlparse
 import numpy as np
 import pandas as pd
 import yfinance as yf
@@ -285,16 +281,17 @@ def fetch_stock(yf_sym, days=252):
 
 
 # ══════════════════════════════════════════════════════════════════════
-#  VERCEL HANDLER
+#  VERCEL SERVERLESS HANDLER
 # ══════════════════════════════════════════════════════════════════════
-class handler(BaseHTTPRequestHandler):
-
-    def do_GET(self):
-        parsed  = urlparse(self.path)
-        params  = parse_qs(parsed.query)
-        sector  = params.get("sector", ["ALL"])[0]
-        top_n   = int(params.get("top", [30])[0])
-        min_sc  = int(params.get("min", [50])[0])
+def handler(request):
+    """Vercel Serverless Function for Swing Scanner"""
+    try:
+        # Parse query parameters
+        query_string = request.url.split('?', 1)[1] if '?' in request.url else ""
+        params = parse_qs(query_string)
+        sector = params.get("sector", ["ALL"])[0]
+        top_n = int(params.get("top", [30])[0])
+        min_sc = int(params.get("min", [50])[0])
 
         # Filter stock list
         stocks = FNO_STOCKS.copy()
@@ -303,15 +300,15 @@ class handler(BaseHTTPRequestHandler):
         stocks = stocks[:top_n]
 
         results = []
-        errors  = []
+        errors = []
 
         for stk in stocks:
             try:
                 df = fetch_stock(stk["yf"], days=252)
-                r  = score_stock(df, stk["sym"])
+                r = score_stock(df, stk["sym"])
                 if r:
                     r["sector"] = stk["sector"]
-                    r["mcap"]   = stk["mcap"]
+                    r["mcap"] = stk["mcap"]
                     results.append(r)
             except Exception as e:
                 errors.append({"sym": stk["sym"], "error": str(e)})
@@ -322,24 +319,29 @@ class handler(BaseHTTPRequestHandler):
         # Filter by min score
         top_results = [r for r in results if r["score"] >= min_sc]
 
+        from datetime import datetime
         payload = {
-            "ok":       True,
-            "scanned":  len(results),
-            "fire":     len([r for r in results if r["score"] >= 100]),
-            "strong":   len([r for r in results if 80 <= r["score"] < 100]),
-            "watch":    len([r for r in results if 50 <= r["score"] < 80]),
-            "errors":   len(errors),
-            "stocks":   results,
-            "scan_time": __import__("datetime").datetime.now().strftime("%d %b %Y, %I:%M %p IST"),
+            "ok": True,
+            "scanned": len(results),
+            "fire": len([r for r in results if r["score"] >= 100]),
+            "strong": len([r for r in results if 80 <= r["score"] < 100]),
+            "watch": len([r for r in results if 50 <= r["score"] < 80]),
+            "errors": len(errors),
+            "stocks": results,
+            "scan_time": datetime.now().strftime("%d %b %Y, %I:%M %p IST"),
         }
 
-        body = json.dumps(payload).encode()
-        self.send_response(200)
-        self.send_header("Content-Type",                "application/json")
-        self.send_header("Access-Control-Allow-Origin", "*")
-        self.send_header("Content-Length",              str(len(body)))
-        self.end_headers()
-        self.wfile.write(body)
-
-    def log_message(self, *args):
-        pass  # Suppress Vercel logs
+        return {
+            "statusCode": 200,
+            "headers": {
+                "Content-Type": "application/json",
+                "Access-Control-Allow-Origin": "*",
+            },
+            "body": json.dumps(payload),
+        }
+    except Exception as e:
+        return {
+            "statusCode": 500,
+            "headers": {"Content-Type": "application/json"},
+            "body": json.dumps({"ok": False, "error": str(e)}),
+        }
