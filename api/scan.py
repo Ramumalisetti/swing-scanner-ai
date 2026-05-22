@@ -6,9 +6,17 @@ Called by the frontend dashboard via fetch('/api/scan?top=30&sector=ALL')
 
 import json
 from urllib.parse import parse_qs, urlparse
-import numpy as np
-import pandas as pd
-import yfinance as yf
+try:
+    import numpy as np
+    import pandas as pd
+    import yfinance as yf
+except Exception:
+    # Allow Vercel build-time inspection to import this module
+    # even if dependencies are not yet installed. Real imports
+    # happen inside the handler at runtime.
+    np = None
+    pd = None
+    yf = None
 
 # ── TOP 50 NSE F&O STOCKS (by index weight — fastest for Vercel) ──────────
 FNO_STOCKS = [

@@ -4,8 +4,12 @@ Returns single stock detailed scan result
 """
 import json
 from urllib.parse import parse_qs, urlparse
-import numpy as np
-import yfinance as yf
+try:
+    import numpy as np
+    import yfinance as yf
+except Exception:
+    np = None
+    yf = None
 
 # Re-use the same score engine (imported inline for serverless isolation)
 # The full indicator code is duplicated here for serverless independence
