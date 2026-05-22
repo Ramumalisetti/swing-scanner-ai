@@ -294,8 +294,14 @@ def fetch_stock(yf_sym, days=252):
 def handler(request):
     """Vercel Serverless Function for Swing Scanner"""
     try:
-        # Parse query parameters
-        query_string = request.url.split('?', 1)[1] if '?' in request.url else ""
+        # Parse query parameters from request
+        query_string = ""
+        if hasattr(request, 'url'):
+            query_string = request.url.split('?', 1)[1] if '?' in request.url else ""
+        elif hasattr(request, 'query_string'):
+            query_string = request.query_string.decode() if isinstance(request.query_string, bytes) else request.query_string
+        elif isinstance(request, dict) and 'querystring' in request:
+            query_string = request['querystring']
         params = parse_qs(query_string)
         sector = params.get("sector", ["ALL"])[0]
         top_n = int(params.get("top", [30])[0])

@@ -60,7 +60,14 @@ SYMBOL_MAP = {
 def handler(request):
     """Vercel Serverless Function for Stock Details"""
     try:
-        query_string = request.url.split('?', 1)[1] if '?' in request.url else ""
+        # Parse query parameters from request
+        query_string = ""
+        if hasattr(request, 'url'):
+            query_string = request.url.split('?', 1)[1] if '?' in request.url else ""
+        elif hasattr(request, 'query_string'):
+            query_string = request.query_string.decode() if isinstance(request.query_string, bytes) else request.query_string
+        elif isinstance(request, dict) and 'querystring' in request:
+            query_string = request['querystring']
         params = parse_qs(query_string)
         sym = params.get("sym", ["RELIANCE"])[0].upper()
         yf_sym = SYMBOL_MAP.get(sym, sym + ".NS")
