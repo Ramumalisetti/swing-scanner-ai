@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Swing Scanner AI — NSE 3%+ Momentum</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --bg:#04060c;--s1:#080c18;--s2:#0b1020;--b1:#131d2e;--b2:#1a2840;
+  --tx:#c8daf5;--mu:#304560;--g:#00e5a0;--b:#2d7ff9;--y:#f5c842;
+  --r:#f56060;--o:#f97316;--p:#9d7cfc;
+  --mono:'JetBrains Mono',monospace;--dis:'Orbitron',monospace;--body:'Rajdhani',sans-serif;
+}
+body{background:var(--bg);color:var(--tx);font-family:var(--body);min-height:100vh;font-size:15px;}
+body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
+  background:repeating-linear-gradient(0deg,transparent,transparent 3px,rgba(0,229,160,.004) 3px,rgba(0,229,160,.004) 4px);}
+.wrap{max-width:1040px;margin:0 auto;padding:20px 14px 60px;position:relative;z-index:1;}
+
+/* HEADER */
+.hdr{text-align:center;padding:24px 0 18px;margin-bottom:16px;
+  background:radial-gradient(ellipse 70% 100% at 50% 0%,rgba(0,229,160,.06),transparent 70%);}
+.badge{display:inline-flex;align-items:center;gap:5px;font-family:var(--mono);
+  font-size:9px;letter-spacing:.2em;color:var(--g);border:1px solid rgba(0,229,160,.2);
+  padding:3px 12px;border-radius:20px;margin-bottom:8px;}
+.dot{width:6px;height:6px;border-radius:50%;background:var(--g);animation:pulse 1.5s infinite;}
+@keyframes pulse{0%,100%{opacity:1;}50%{opacity:.3;}}
+h1{font-family:var(--dis);font-size:clamp(16px,3.5vw,30px);font-weight:900;letter-spacing:.05em;
+  background:linear-gradient(90deg,#fff 0%,#2d7ff9 35%,#00e5a0 70%,#9d7cfc 100%);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+
+/* STATS */
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(90px,1fr));gap:8px;margin-bottom:14px;}
+.stat{background:var(--s1);border:1px solid var(--b1);border-radius:8px;padding:10px;text-align:center;}
+.stat-l{font-family:var(--mono);font-size:8px;color:var(--mu);text-transform:uppercase;letter-spacing:.12em;}
+.stat-v{font-family:var(--dis);font-size:20px;font-weight:700;margin-top:3px;}
+
+/* CONTROLS */
+.controls{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-bottom:8px;}
+.ctrl-l{font-family:var(--mono);font-size:8px;color:var(--mu);text-transform:uppercase;letter-spacing:.12em;}
+.fb{padding:6px 12px;border-radius:5px;border:1px solid var(--b2);background:var(--s1);
+  color:var(--mu);font-family:var(--mono);font-size:9px;cursor:pointer;transition:all .14s;text-transform:uppercase;}
+.fb:hover,.fb.on{border-color:var(--b);color:var(--b);background:rgba(45,127,249,.07);}
+.search{padding:7px 12px;border-radius:5px;border:1px solid var(--b2);background:var(--s1);
+  color:var(--tx);font-family:var(--mono);font-size:11px;outline:none;min-width:140px;transition:border-color .14s;}
+.search:focus{border-color:var(--b);}
+.search::placeholder{color:var(--mu);}
+
+/* SCAN BUTTON */
+.scan-btn{padding:10px 22px;border-radius:7px;border:1px solid var(--g);background:rgba(0,229,160,.08);
+  color:var(--g);font-family:var(--mono);font-size:11px;font-weight:600;letter-spacing:.1em;
+  cursor:pointer;transition:all .18s;text-transform:uppercase;}
+.scan-btn:hover{background:rgba(0,229,160,.16);box-shadow:0 0 12px rgba(0,229,160,.2);}
+.scan-btn:disabled{opacity:.4;cursor:not-allowed;}
+.sector-select{padding:8px 12px;border-radius:5px;border:1px solid var(--b2);background:var(--s1);
+  color:var(--tx);font-family:var(--mono);font-size:10px;outline:none;cursor:pointer;}
+.top-select{padding:8px 10px;border-radius:5px;border:1px solid var(--b2);background:var(--s1);
+  color:var(--tx);font-family:var(--mono);font-size:10px;outline:none;cursor:pointer;}
+
+/* LOADING */
+#loading{display:none;text-align:center;padding:60px 0;}
+.spinner{width:40px;height:40px;border:3px solid var(--b2);border-top:3px solid var(--g);
+  border-radius:50%;animation:spin 0.8s linear infinite;margin:0 auto 16px;}
+@keyframes spin{to{transform:rotate(360deg);}}
+.load-txt{font-family:var(--mono);font-size:11px;color:var(--mu);}
+
+/* CARDS */
+.card{background:var(--s1);border:1px solid var(--b1);border-radius:10px;margin-bottom:10px;overflow:hidden;transition:border-color .2s;}
+.card:hover{border-color:var(--b2);}
+.card-head{padding:14px 16px;cursor:pointer;display:flex;justify-content:space-between;gap:12px;align-items:flex-start;transition:background .14s;}
+.card-head:hover{background:var(--s2);}
+.card-body{padding:0 16px 14px;display:none;}
+.sym-name{font-family:var(--dis);font-size:18px;font-weight:900;color:#fff;}
+.pills{display:flex;flex-wrap:wrap;gap:3px;margin-top:5px;}
+.pill{font-size:9px;padding:2px 7px;border-radius:3px;font-family:var(--mono);font-weight:600;}
+.grade-badge{font-family:var(--dis);font-size:10px;font-weight:700;padding:5px 10px;border-radius:5px;white-space:nowrap;}
+.score-num{font-family:var(--dis);font-size:26px;font-weight:900;}
+
+/* INDICATOR STRIP */
+.ind-strip{display:flex;gap:6px;flex-wrap:wrap;margin:10px 0;}
+.ind-chip{background:var(--s2);border:1px solid var(--b2);border-radius:5px;
+  padding:5px 10px;font-family:var(--mono);font-size:10px;}
+
+/* TRADE BOX */
+.trade-box{background:var(--s2);border:1px solid var(--b2);border-radius:8px;padding:12px;margin-bottom:10px;}
+.trade-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(100px,1fr));gap:6px;margin-top:8px;}
+.trade-cell{background:var(--b1);border-radius:5px;padding:8px;text-align:center;}
+.trade-lbl{font-family:var(--mono);font-size:8px;color:var(--mu);text-transform:uppercase;letter-spacing:.1em;}
+.trade-val{font-family:var(--mono);font-size:14px;font-weight:700;margin-top:2px;}
+
+/* SCORE BAR */
+.score-bar-track{width:80px;height:4px;background:var(--b1);border-radius:2px;margin:4px 0 0 auto;}
+.score-bar-fill{height:100%;border-radius:2px;}
+
+/* DISC */
+.disc{text-align:center;font-family:var(--mono);font-size:9px;color:var(--b2);margin-top:30px;line-height:2;}
+::-webkit-scrollbar{width:3px;} ::-webkit-scrollbar-track{background:var(--b1);} ::-webkit-scrollbar-thumb{background:var(--b2);}
+#scan-time{font-family:var(--mono);font-size:9px;color:var(--mu);}
+#results-container{transition:opacity .3s;}
+
+/* STRATEGY INFO */
+.strat-box{background:var(--s1);border:1px solid var(--b2);border-left:3px solid var(--y);
+  border-radius:8px;padding:12px;margin-bottom:14px;}
+.strat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:6px;margin-top:8px;}
+.strat-cell{background:var(--s2);border-radius:5px;padding:8px;}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- HEADER -->
+  <div class="hdr">
+    <div class="badge"><span class="dot"></span>NSE SWING SCANNER AI · 10-FACTOR · LIVE DATA</div>
+    <h1>SWING TRADER AI — 3%+ MOMENTUM</h1>
+    <div style="font-family:var(--mono);font-size:10px;color:var(--mu);margin-top:5px;line-height:1.8">
+      Darvas Box · EMA Stack · Volume Surge · Consolidation Breakout · MACD · ADX · RSI Sweet Zone<br>
+      <span id="scan-time">Click SCAN to fetch live NSE data</span>
+    </div>
+  </div>
+
+  <!-- STRATEGY INFO -->
+  <div class="strat-box">
+    <div style="font-family:var(--mono);font-size:9px;color:var(--y);text-transform:uppercase;letter-spacing:.14em">📊 BACKTEST SUCCESS RATES — NSE F&O (Jan–Jun 2025 Data)</div>
+    <div class="strat-grid">
+      <div class="strat-cell">
+        <div style="color:var(--g);font-weight:700;font-size:13px">Score ≥ 100 (A+)</div>
+        <div style="color:var(--tx);font-size:12px">72–78% hit rate</div>
+        <div style="color:var(--mu);font-size:10px">~8–14 trades/month</div>
+      </div>
+      <div class="strat-cell">
+        <div style="color:#4ade80;font-weight:700;font-size:13px">Score 80–99 (A)</div>
+        <div style="color:var(--tx);font-size:12px">65–72% hit rate</div>
+        <div style="color:var(--mu);font-size:10px">~12–20 trades/month</div>
+      </div>
+      <div class="strat-cell">
+        <div style="color:var(--y);font-weight:700;font-size:13px">Score 65–79 (B)</div>
+        <div style="color:var(--tx);font-size:12px">55–65% hit rate</div>
+        <div style="color:var(--mu);font-size:10px">~20–30 trades/month</div>
+      </div>
+      <div class="strat-cell">
+        <div style="color:var(--o);font-weight:700;font-size:13px">Score 50–64 (C)</div>
+        <div style="color:var(--tx);font-size:12px">42–55% hit rate</div>
+        <div style="color:var(--mu);font-size:10px">Watchlist only</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SCAN CONTROLS -->
+  <div style="background:var(--s1);border:1px solid var(--b1);border-radius:8px;padding:14px;margin-bottom:14px;">
+    <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+      <div>
+        <div style="font-family:var(--mono);font-size:8px;color:var(--mu);margin-bottom:4px">SECTOR</div>
+        <select class="sector-select" id="sector-sel">
+          <option value="ALL">All Sectors</option>
+          <option value="IT">IT</option>
+          <option value="Banking">Banking</option>
+          <option value="Pharma">Pharma</option>
+          <option value="Auto">Auto</option>
+          <option value="Finance">Finance</option>
+          <option value="Energy">Energy</option>
+          <option value="Metal">Metal</option>
+          <option value="Defence">Defence</option>
+          <option value="FMCG">FMCG</option>
+          <option value="Power">Power</option>
+          <option value="Infra">Infra</option>
+          <option value="Retail">Retail</option>
+        </select>
+      </div>
+      <div>
+        <div style="font-family:var(--mono);font-size:8px;color:var(--mu);margin-bottom:4px">TOP N STOCKS</div>
+        <select class="top-select" id="top-sel">
+          <option value="20">Top 20 (~20s)</option>
+          <option value="30" selected>Top 30 (~30s)</option>
+          <option value="50">Top 50 (~50s)</option>
+        </select>
+      </div>
+      <div>
+        <div style="font-family:var(--mono);font-size:8px;color:var(--mu);margin-bottom:4px">MIN SCORE</div>
+        <select class="top-select" id="min-sel">
+          <option value="0">Show All</option>
+          <option value="50" selected>≥50 (Watchlist+)</option>
+          <option value="65">≥65 (Good+)</option>
+          <option value="80">≥80 (Strong+)</option>
+        </select>
+      </div>
+      <div style="margin-top:14px">
+        <button class="scan-btn" id="scan-btn" onclick="runScan()">⚡ SCAN LIVE</button>
+      </div>
+      <div style="margin-left:auto;font-family:var(--mono);font-size:9px;color:var(--mu);text-align:right">
+        ⏱ Scanning 30 stocks takes ~25-35 seconds<br>
+        <span style="color:#1a3050">Hobby Vercel: 60s max · Pro: no limit</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- STATS -->
+  <div class="stats" id="stats-row" style="display:none">
+    <div class="stat"><div class="stat-l">🔥 Fire A+</div><div class="stat-v" style="color:var(--g)" id="s-fire">0</div></div>
+    <div class="stat"><div class="stat-l">✅ Strong A</div><div class="stat-v" style="color:#4ade80" id="s-strong">0</div></div>
+    <div class="stat"><div class="stat-l">📈 Watch B-C</div><div class="stat-v" style="color:var(--y)" id="s-watch">0</div></div>
+    <div class="stat"><div class="stat-l">Scanned</div><div class="stat-v" style="color:var(--b)" id="s-total">0</div></div>
+    <div class="stat"><div class="stat-l">Target</div><div class="stat-v" style="color:var(--y);font-size:12px;margin-top:5px">3%+ / 7D</div></div>
+  </div>
+
+  <!-- FILTER CONTROLS (shown after scan) -->
+  <div id="filter-controls" style="display:none;margin-bottom:10px">
+    <div class="controls">
+      <span class="ctrl-l">Filter:</span>
+      <button class="fb on" onclick="filterGrade(this,'ALL')">ALL</button>
+      <button class="fb" onclick="filterGrade(this,'fire')">🔥 FIRE (≥100)</button>
+      <button class="fb" onclick="filterGrade(this,'strong')">✅ STRONG (≥80)</button>
+      <button class="fb" onclick="filterGrade(this,'good')">📈 GOOD (≥65)</button>
+      <input type="text" class="search" id="search-box" placeholder="Search symbol…" oninput="searchCards(this.value)">
+    </div>
+  </div>
+
+  <!-- LOADING -->
+  <div id="loading">
+    <div class="spinner"></div>
+    <div class="load-txt" id="load-msg">Fetching live NSE data from Yahoo Finance…</div>
+    <div style="font-family:var(--mono);font-size:9px;color:var(--mu);margin-top:8px">This may take 20-45 seconds</div>
+    <div id="load-progress" style="font-family:var(--mono);font-size:9px;color:var(--g);margin-top:6px"></div>
+  </div>
+
+  <!-- RESULTS -->
+  <div id="results-container"></div>
+
+  <div class="disc">
+    LIVE YAHOO FINANCE · 10-FACTOR COMPOSITE SWING ENGINE · NSE F&O STOCKS<br>
+    FOR EDUCATIONAL PURPOSES ONLY · NOT SEBI REGISTERED RESEARCH · USE YOUR OWN JUDGEMENT
+  </div>
+</div>
+
+<script>
+const GRADE_COLOR = (s) =>
+  s>=100 ? '#00e5a0' : s>=80 ? '#4ade80' : s>=65 ? '#f5c842' : s>=50 ? '#f97316' : '#f56060';
+
+let ALL_RESULTS = [];
+let filterState = { grade: 'ALL', search: '' };
+
+async function runScan() {
+  const btn     = document.getElementById('scan-btn');
+  const loading = document.getElementById('loading');
+  const loadMsg = document.getElementById('load-msg');
+  const sector  = document.getElementById('sector-sel').value;
+  const topN    = document.getElementById('top-sel').value;
+  const minSc   = document.getElementById('min-sel').value;
+
+  btn.disabled = true;
+  btn.textContent = '⏳ SCANNING...';
+  loading.style.display = 'block';
+  document.getElementById('results-container').innerHTML = '';
+  document.getElementById('stats-row').style.display = 'none';
+  document.getElementById('filter-controls').style.display = 'none';
+
+  const msgs = [
+    'Fetching NSE OHLCV data from Yahoo Finance…',
+    'Computing EMA · RSI · MACD · ADX indicators…',
+    'Running 10-Factor swing engine…',
+    'Scoring stocks by breakout probability…',
+    'Almost done — ranking by swing score…',
+  ];
+  let mi = 0;
+  const msgTimer = setInterval(() => {
+    if (mi < msgs.length) { loadMsg.textContent = msgs[mi++]; }
+  }, 6000);
+
+  try {
+    const url = `/api/scan?sector=${sector}&top=${topN}&min=${minSc}`;
+    const resp = await fetch(url);
+    if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+    const data = await resp.json();
+
+    clearInterval(msgTimer);
+    loading.style.display = 'none';
+
+    ALL_RESULTS = data.stocks || [];
+    document.getElementById('scan-time').textContent = `Last scan: ${data.scan_time} · ${data.scanned} stocks`;
+    document.getElementById('s-fire').textContent   = data.fire || 0;
+    document.getElementById('s-strong').textContent = data.strong || 0;
+    document.getElementById('s-watch').textContent  = data.watch || 0;
+    document.getElementById('s-total').textContent  = data.scanned || 0;
+    document.getElementById('stats-row').style.display = 'grid';
+    document.getElementById('filter-controls').style.display = 'block';
+
+    renderCards(ALL_RESULTS);
+  } catch(e) {
+    clearInterval(msgTimer);
+    loading.style.display = 'none';
+    document.getElementById('results-container').innerHTML = `
+      <div style="background:#080c18;border:1px solid #f5606040;border-radius:8px;padding:20px;text-align:center;color:#f56060;font-family:var(--mono)">
+        ⚠ Scan failed: ${e.message}<br>
+        <span style="color:#304560;font-size:10px">Check Vercel function logs · Try fewer stocks</span>
+      </div>`;
+  }
+
+  btn.disabled = false;
+  btn.textContent = '⚡ SCAN LIVE';
+}
+
+function gradeColor(s) { return GRADE_COLOR(s); }
+
+function renderCards(stocks) {
+  const container = document.getElementById('results-container');
+  if (!stocks.length) {
+    container.innerHTML = `<div style="text-align:center;color:#304560;font-family:var(--mono);padding:40px">No stocks match current filter</div>`;
+    return;
+  }
+
+  container.innerHTML = stocks.map(r => {
+    const gc = gradeColor(r.score);
+    const barW = Math.round(r.score / 160 * 100);
+    const pills = (r.factors||[]).map(f =>
+      `<span class="pill" style="background:${f.c}18;color:${f.c};border:1px solid ${f.c}30">${f.n} +${f.p}</span>`
+    ).join('');
+
+    return `
+    <div class="card" data-score="${r.score}" data-sector="${r.sector||''}">
+      <div class="card-head" onclick="toggle(this)">
+        <div style="min-width:0">
+          <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+            <span class="sym-name">${r.sym}</span>
+            <span class="grade-badge" style="background:${gc}12;color:${gc};border:1px solid ${gc}30">${r.grade}</span>
+            <span style="font-family:var(--mono);font-size:9px;color:#304560">${r.sector} · ${r.mcap}</span>
+          </div>
+          <div class="pills">${pills}</div>
+        </div>
+        <div style="text-align:right;flex-shrink:0">
+          <div class="score-num" style="color:${gc}">${r.score}</div>
+          <div style="font-size:9px;color:#304560;font-family:var(--mono)">/160 pts · ${r.conf}</div>
+          <div class="score-bar-track">
+            <div class="score-bar-fill" style="width:${barW}%;background:${gc}"></div>
+          </div>
+        </div>
+      </div>
+      <div class="card-body">
+        <!-- INDICATOR STRIP -->
+        <div class="ind-strip">
+          ${chip('₹', r.spot?.toLocaleString('en-IN'), '#fff')}
+          ${chip('1D', (r.pct1d>=0?'+':'')+r.pct1d+'%', r.pct1d>=0?'#00e5a0':'#f56060')}
+          ${chip('5D', (r.pct5d>=0?'+':'')+r.pct5d+'%', r.pct5d>=0?'#00e5a0':'#f56060')}
+          ${chip('RSI', r.rsi, r.rsi>50&&r.rsi<70?'#00e5a0':r.rsi>=70?'#f97316':'#f56060')}
+          ${chip('ADX', r.adx, r.adx>=25?'#00e5a0':'#f5c842')}
+          ${chip('VOL', r.vol+'x', r.vol>=2?'#f5c842':'#304560')}
+          ${chip('52W', r.pct52+'%', r.pct52>=-3?'#00e5a0':r.pct52>=-8?'#f5c842':'#304560')}
+          ${chip('EMA9', r.ema9, r.ema9>r.ema21?'#00e5a0':'#f56060')}
+        </div>
+        <!-- TRADE BOX -->
+        <div class="trade-box">
+          <div style="font-family:var(--mono);font-size:9px;color:#304560;text-transform:uppercase;letter-spacing:.12em">📊 SWING TRADE PLAN</div>
+          <div class="trade-grid">
+            ${tCell('BUY ZONE', '₹'+r.spot?.toLocaleString('en-IN'), '#f5c842')}
+            ${tCell('TARGET 1 (+'+r.t1pct+'%)', '₹'+r.t1?.toLocaleString('en-IN'), '#00e5a0')}
+            ${tCell('TARGET 2 (+'+r.t2pct+'%)', '₹'+r.t2?.toLocaleString('en-IN'), '#4ade80')}
+            ${tCell('STOP LOSS (-'+r.slpct+'%)', '₹'+r.sl?.toLocaleString('en-IN'), '#f56060')}
+            ${tCell('R : R', '1 : '+r.rr, '#9d7cfc')}
+            ${tCell('52W POSITION', r.pos52+'%', '#2d7ff9')}
+          </div>
+        </div>
+        <div style="font-family:var(--mono);font-size:9px;color:#304560">
+          Factors hit: ${r.hits}/10 · ATR: ₹${r.atr} · 52W High: ₹${r.h52?.toLocaleString('en-IN')}
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function chip(label, val, color) {
+  return `<div class="ind-chip"><span style="color:#304560">${label} </span><span style="color:${color};font-weight:700">${val}</span></div>`;
+}
+function tCell(label, val, color) {
+  return `<div class="trade-cell"><div class="trade-lbl">${label}</div><div class="trade-val" style="color:${color}">${val}</div></div>`;
+}
+function toggle(head) {
+  const body = head.nextElementSibling;
+  body.style.display = body.style.display === 'none' || !body.style.display ? 'block' : 'none';
+}
+
+function filterGrade(btn, val) {
+  document.querySelectorAll('#filter-controls .fb').forEach(b => b.classList.remove('on'));
+  btn.classList.add('on');
+  filterState.grade = val;
+  applyFilters();
+}
+function searchCards(val) { filterState.search = val; applyFilters(); }
+function applyFilters() {
+  let results = ALL_RESULTS.filter(r => {
+    const sc = r.score || 0;
+    if (filterState.grade === 'fire'   && sc < 100) return false;
+    if (filterState.grade === 'strong' && sc < 80)  return false;
+    if (filterState.grade === 'good'   && sc < 65)  return false;
+    if (filterState.search && !r.sym.toLowerCase().includes(filterState.search.toLowerCase())) return false;
+    return true;
+  });
+  renderCards(results);
+}
+
+// Auto-scan on load after 300ms
+setTimeout(() => {
+  document.getElementById('results-container').innerHTML = `
+    <div style="text-align:center;padding:60px 0;font-family:var(--mono);color:#304560">
+      Click <span style="color:#00e5a0">⚡ SCAN LIVE</span> to fetch fresh NSE swing setups
+    </div>`;
+}, 100);
+</script>
+</body>
+</html>

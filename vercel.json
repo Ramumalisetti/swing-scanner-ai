@@ -1,0 +1,12 @@
+{
+  "version": 2,
+  "functions": {
+    "api/scan.py":  { "maxDuration": 60, "memory": 1024 },
+    "api/stock.py": { "maxDuration": 30, "memory": 512  }
+  },
+  "rewrites": [
+    { "source": "/api/scan",  "destination": "/api/scan.py"  },
+    { "source": "/api/stock", "destination": "/api/stock.py" },
+    { "source": "/(.*)",      "destination": "/index.html"   }
+  ]
+}
