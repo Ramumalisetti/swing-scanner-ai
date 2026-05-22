@@ -120,5 +120,6 @@ def handler(request):
             "body": json.dumps({"ok": False, "error": str(e)}),
         }
 
-    def log_message(self, *args):
-        pass
+
+# Export handler for Vercel
+app = handler
