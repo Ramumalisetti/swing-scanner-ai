@@ -6,17 +6,15 @@ Called by the frontend dashboard via fetch('/api/scan?top=30&sector=ALL')
 
 import json
 from urllib.parse import parse_qs, urlparse
+
 try:
     import numpy as np
     import pandas as pd
     import yfinance as yf
-except Exception:
-    # Allow Vercel build-time inspection to import this module
-    # even if dependencies are not yet installed. Real imports
-    # happen inside the handler at runtime.
-    np = None
-    pd = None
-    yf = None
+    DEPS_AVAILABLE = True
+except ImportError as e:
+    DEPS_AVAILABLE = False
+    IMPORT_ERROR = str(e)
 
 # ── TOP 50 NSE F&O STOCKS (by index weight — fastest for Vercel) ──────────
 FNO_STOCKS = [
@@ -294,6 +292,13 @@ def fetch_stock(yf_sym, days=252):
 def handler(request):
     """Vercel Serverless Function for Swing Scanner"""
     try:
+        if not DEPS_AVAILABLE:
+            return {
+                "statusCode": 500,
+                "headers": {"Content-Type": "application/json"},
+                "body": json.dumps({"ok": False, "error": f"Import error: {IMPORT_ERROR}"}),
+            }
+        
         # Parse query parameters from request
         query_string = ""
         if hasattr(request, 'url'):
