@@ -126,7 +126,3 @@ def handler(request):
             "headers": {"Content-Type": "application/json"},
             "body": json.dumps({"ok": False, "error": str(e)}),
         }
-
-
-# Export handler for Vercel
-app = handler
