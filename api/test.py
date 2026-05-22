@@ -7,5 +7,9 @@ def handler(request):
         "body": "OK",
     }
 
+# Export for Vercel
+app = handler
+
+
 
 
